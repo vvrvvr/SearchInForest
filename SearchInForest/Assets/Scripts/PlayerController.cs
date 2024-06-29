@@ -64,7 +64,12 @@ public class PlayerController : MonoBehaviour
         {
             testMesh.transform.localRotation = Quaternion.Euler(0f, -90f, 90f);
         }
+        
+        redTransform = red.transform;
+        blueTransform = blue.transform;
+        
     }
+    
 
     private void Update()
     {
@@ -75,6 +80,12 @@ public class PlayerController : MonoBehaviour
 
         HandleInput();
         HandleAcceleration();
+
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            SpawnPlayer(Vector3.zero);
+            Debug.Log("manually spawned");
+        }
     }
 
     private void FixedUpdate()
@@ -209,17 +220,20 @@ public class PlayerController : MonoBehaviour
         {
             currentCenter.SetActive(true);
         }
-
+        Debug.Log("spawnPlayer");
         hasControl = true;
-        redTransform = red.transform;
-        blueTransform = blue.transform;
         normalRotationSpeed = rotationSpeed;
-        currentRb = rb1;
-        SetCenterTransform(center1, redTransform);
-        SetCenterTransform(center2, blueTransform);
         currentRotationSpeed = normalRotationSpeed;
-
-        currentCenter = center1;
+        
+        //сделать в зависимости от куррент сентер
+       
+        if (currentCenter == null)
+        {
+            currentCenter = center1;
+            currentRb = rb1;
+            SetCenterTransform(currentCenter, redTransform);
+        }
+        
         currentCenter.transform.position = new Vector3(position.x, 0f, position.z);
         currentCenter.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
     }
