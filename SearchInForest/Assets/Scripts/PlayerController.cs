@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Serialization;
-using System.Collections;
+using DG.Tweening;  // Import DOTween
 
 public class PlayerController : MonoBehaviour
 {
@@ -12,43 +9,32 @@ public class PlayerController : MonoBehaviour
     public GameObject body;
     public GameObject red;
     public GameObject blue;
-    private Transform position1;
-    private Transform position2;
     public Rigidbody rb1;
     public Rigidbody rb2;
     public GameObject effect;
-    //private AudioSource audio;
-    
-    private Rigidbody rb;
-    public bool isRotatingClockwise = true;
-    public GameObject currentCenter = null;
-    [Space(50)] 
-    private float normalRotationSpeed; // Нормальная скорость вращения
-    public float currentRotationSpeed; // Текущая скорость вращения
-    private float accelerationTimer; // Таймер ускорения
+    public GameObject testMesh;
 
+    private Transform position1;
+    private Transform position2;
     private Rigidbody currentRb;
-    
-    
-    public float rotationSpeed = 100.0f;
-    public float rotationSpeedMax = 200.0f; // Максимальная скорость вращения
-    public float accelerationTime = 1.0f;
-    public float deaccelerationTime = 0.5f; // Время ускорения до максимальной скорости
-
-    //public GameObject currentCenter = null;
-    private float interactionDistance = 2f;
-    [HideInInspector] public bool hasControl;
-
-    
-    [Space(10)] 
-    [SerializeField] private bool iFramesAfterDamage = false;
-    [SerializeField] private float iFramseDuration = 0.3f;
-
+    public GameObject currentCenter;
+    private bool isRotatingClockwise = true;
     private bool isChangeCenter = false;
-    
+    public bool hasControl;
+
+    private float normalRotationSpeed;
+    public float currentRotationSpeed;
+    private float accelerationTimer;
+
+    public float rotationSpeed = 100.0f;
+    public float rotationSpeedMax = 200.0f;
+    public float accelerationTime = 1.0f;
+    public float deaccelerationTime = 0.5f;
+    private float interactionDistance = 2f;
+
+    public float meshRotationTime = 1.0f; // Time in seconds for mesh rotation
 
     private static PlayerController _instance;
-
     public static PlayerController Instance
     {
         get
@@ -58,19 +44,12 @@ public class PlayerController : MonoBehaviour
                 _instance = FindObjectOfType<PlayerController>();
                 if (_instance == null)
                 {
-                    GameObject singletonObject = new GameObject("YourScriptSingleton");
+                    GameObject singletonObject = new GameObject("PlayerControllerSingleton");
                     _instance = singletonObject.AddComponent<PlayerController>();
                 }
             }
-
             return _instance;
         }
-    }
-
-    private void Start()
-    {
-       
-       
     }
 
     private void Awake()
@@ -78,78 +57,53 @@ public class PlayerController : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         if (_instance != null && _instance != this)
         {
-            Destroy(this.gameObject);
+            Destroy(gameObject);
+        }
+        // Set initial rotation of testMesh
+        if (testMesh != null)
+        {
+            testMesh.transform.localRotation = Quaternion.Euler(0f, -90f, 90f);
         }
     }
 
     private void Update()
     {
-        if (!hasControl)
-            return;
-        
+        if (!hasControl) return;
+
         currentRb.velocity = Vector3.zero;
         currentRb.transform.rotation = Quaternion.Euler(0f, currentRb.transform.rotation.eulerAngles.y, 0f);
-        
+
         HandleInput();
         HandleAcceleration();
     }
 
     private void FixedUpdate()
     {
-        if (!hasControl)
-        {
-            return;
-        }
-        
+        if (!hasControl) return;
+
         HandleRotation();
     }
 
     private void HandleInput()
     {
-        if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            isRotatingClockwise = true;
+            isRotatingClockwise = !isRotatingClockwise;
             isChangeCenter = true;
         }
-        if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
+
+        if (Input.GetKeyUp(KeyCode.Space))
         {
-            isRotatingClockwise = false;
-            isChangeCenter = true;
-        }
-        
-        if (isChangeCenter)
-        {
-            isChangeCenter = false;
-            //isRotatingClockwise = !isRotatingClockwise;
-           
-                
-            
-            if (currentCenter == center1)
-                currentCenter = center2;
-            else
-                currentCenter = center1;
-
-            if (currentCenter == center1)
+            if (isChangeCenter)
             {
-                center1.transform.position = new Vector3(position1.position.x, 0f, position1.position.z);
-                center1.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
-                body.transform.SetParent(center1.transform);
-                center2.transform.SetParent(null);
-                currentRb = rb1;
+                SwitchCenter();
             }
-            else
-            {
-                center2.transform.position = new Vector3(position2.position.x, 0f, position2.position.z);
-                center2.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
-                body.transform.SetParent(center2.transform);
-                center1.transform.SetParent(null);
-                currentRb = rb2;
-            }
-
-            currentRotationSpeed = normalRotationSpeed;
-            accelerationTimer = 0f;
-
             InteractWithFloor();
+        }
+
+        if (!Input.GetKey(KeyCode.Space))
+        {
+            currentRb.angularVelocity = Vector3.zero;
         }
     }
 
@@ -160,14 +114,12 @@ public class PlayerController : MonoBehaviour
             if (accelerationTimer < accelerationTime)
             {
                 accelerationTimer += Time.deltaTime;
-                currentRotationSpeed = Mathf.Lerp(normalRotationSpeed, rotationSpeedMax,
-                    accelerationTimer / accelerationTime);
+                currentRotationSpeed = Mathf.Lerp(normalRotationSpeed, rotationSpeedMax, accelerationTimer / accelerationTime);
             }
         }
         else
         {
-            currentRotationSpeed = Mathf.Lerp(currentRotationSpeed, normalRotationSpeed,
-                Time.deltaTime / deaccelerationTime);
+            currentRotationSpeed = Mathf.Lerp(currentRotationSpeed, normalRotationSpeed, Time.deltaTime / deaccelerationTime);
         }
 
         if (Input.GetKeyUp(KeyCode.Space))
@@ -179,13 +131,9 @@ public class PlayerController : MonoBehaviour
 
     private void HandleRotation()
     {
-        if (isRotatingClockwise)
+        if (Input.GetKey(KeyCode.Space))
         {
-            currentRb.angularVelocity = Vector3.up * currentRotationSpeed * Time.fixedDeltaTime;
-        }
-        else
-        {
-            currentRb.angularVelocity = -Vector3.up * currentRotationSpeed * Time.fixedDeltaTime;
+            currentRb.angularVelocity = (isRotatingClockwise ? Vector3.up : -Vector3.up) * currentRotationSpeed * Time.fixedDeltaTime;
         }
     }
 
@@ -193,10 +141,7 @@ public class PlayerController : MonoBehaviour
     {
         Instantiate(effect, body.transform.position, Quaternion.identity);
         Debug.Log("death");
-        currentRb.angularVelocity = Vector3.zero;
-        currentRb.velocity = Vector3.zero;
-        hasControl = false;
-        currentCenter.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+        DisablePlayer();
         currentCenter.SetActive(false);
     }
 
@@ -209,51 +154,88 @@ public class PlayerController : MonoBehaviour
         currentCenter.SetActive(false);
     }
 
-   
-
     private void InteractWithFloor()
     {
-        if (currentCenter != null)
+        if (currentCenter == null) return;
+
+        Ray ray = new Ray(currentCenter.transform.position, Vector3.down);
+        if (Physics.Raycast(ray, out RaycastHit hit, interactionDistance))
         {
-            RaycastHit hit;
-            Ray ray = new Ray(currentCenter.transform.position, Vector3.down);
-            if (Physics.Raycast(ray, out hit, interactionDistance))
-            {
-                IInteractable interactable = hit.collider.gameObject.GetComponent<IInteractable>();
-                if ( interactable != null)
-                {
-                    interactable.Interact();
-                }
-            }
+            IInteractable interactable = hit.collider.gameObject.GetComponent<IInteractable>();
+            interactable?.Interact();
+        }
+    }
+
+    private void SwitchCenter()
+    {
+        isChangeCenter = false;
+
+        currentCenter = currentCenter == center1 ? center2 : center1;
+
+        if (currentCenter == center1)
+        {
+            SetCenterTransform(center1, position1);
+            SetCenterTransform(center2, null);
+            currentRb = rb1;
+        }
+        else
+        {
+            SetCenterTransform(center2, position2);
+            SetCenterTransform(center1, null);
+            currentRb = rb2;
+        }
+
+        currentRotationSpeed = normalRotationSpeed;
+        accelerationTimer = 0f;
+    }
+
+    private void SetCenterTransform(GameObject center, Transform position)
+    {
+        if (position != null)
+        {
+            center.transform.position = new Vector3(position.position.x, 0f, position.position.z);
+            center.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+            body.transform.SetParent(center.transform);
+        }
+        else
+        {
+            center.transform.SetParent(null);
         }
     }
 
     public void ChangeRotation()
     {
         isRotatingClockwise = !isRotatingClockwise;
+
+        if (testMesh != null)
+        {
+            // Check the current local rotation of testMesh on the Z axis
+            float currentZRotation = testMesh.transform.localEulerAngles.z;
+            // Determine the target rotation
+            float targetZRotation = Mathf.Approximately(currentZRotation, 90f) ? -90f : 90f;
+            // Use DOTween to rotate the mesh over meshRotationTime seconds
+            testMesh.transform.DOLocalRotate(new Vector3(testMesh.transform.localEulerAngles.x, testMesh.transform.localEulerAngles.y, targetZRotation), meshRotationTime);
+        }
     }
 
     public void SpawnPlayer(Vector3 position)
     {
-        if(currentCenter !=null)
+        if (currentCenter != null)
+        {
             currentCenter.SetActive(true);
+        }
+
         hasControl = true;
         position1 = red.transform;
         position2 = blue.transform;
         normalRotationSpeed = rotationSpeed;
         currentRb = rb1;
-        center1.transform.SetParent(null);
-        center1.transform.position = new Vector3(position1.position.x, 0f, position1.position.z);
-        center1.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
-        body.transform.SetParent(center1.transform);
-        center2.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
-        center2.transform.position = new Vector3(position2.position.x, 0f, position2.position.z);
-        center2.transform.SetParent(null);
+        SetCenterTransform(center1, position1);
+        SetCenterTransform(center2, position2);
         currentRotationSpeed = normalRotationSpeed;
-        
+
         currentCenter = center1;
         currentCenter.transform.position = new Vector3(position.x, 0f, position.z);
         currentCenter.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
     }
-    
 }
