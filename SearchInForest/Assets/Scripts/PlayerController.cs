@@ -14,8 +14,8 @@ public class PlayerController : MonoBehaviour
     public GameObject effect;
     public GameObject testMesh;
 
-    private Transform position1;
-    private Transform position2;
+    private Transform redTransform;
+    private Transform blueTransform;
     private Rigidbody currentRb;
     public GameObject currentCenter;
     private bool isRotatingClockwise = true;
@@ -164,17 +164,17 @@ public class PlayerController : MonoBehaviour
 
         if (currentCenter == center1)
         {
-            SetCenterTransform(center1, position1);
-            SetCenterTransform(center2, null);
+            SetCenterTransform(center1, redTransform); //здесь назначаем точке вращения текущую позицию кончика
+           
             currentRb = rb1;
-            red.GetComponent<GroundChecker>().InteractWithFloor();
+            red.GetComponent<GroundChecker>().InteractWithFloor(); //здесь взаимодействие с интерфейсом пола
         }
         else
         {
-            SetCenterTransform(center2, position2);
-            SetCenterTransform(center1, null);
+            SetCenterTransform(center2, blueTransform); ////здесь назначаем точке вращения текущую позицию кончика
+            
             currentRb = rb2;
-            blue.GetComponent<GroundChecker>().InteractWithFloor();
+            blue.GetComponent<GroundChecker>().InteractWithFloor(); //здесь взаимодействие с интерфейсом пола
         }
 
         currentRotationSpeed = normalRotationSpeed;
@@ -183,16 +183,9 @@ public class PlayerController : MonoBehaviour
 
     private void SetCenterTransform(GameObject center, Transform position)
     {
-        if (position != null)
-        {
-            center.transform.position = new Vector3(position.position.x, 0f, position.position.z);
-            center.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
-            body.transform.SetParent(center.transform);
-        }
-        else
-        {
-            center.transform.SetParent(null);
-        }
+        center.transform.position = new Vector3(position.position.x, 0f, position.position.z);
+        center.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+        body.transform.SetParent(center.transform);
     }
 
     public void ChangeRotation()
@@ -218,12 +211,12 @@ public class PlayerController : MonoBehaviour
         }
 
         hasControl = true;
-        position1 = red.transform;
-        position2 = blue.transform;
+        redTransform = red.transform;
+        blueTransform = blue.transform;
         normalRotationSpeed = rotationSpeed;
         currentRb = rb1;
-        SetCenterTransform(center1, position1);
-        SetCenterTransform(center2, position2);
+        SetCenterTransform(center1, redTransform);
+        SetCenterTransform(center2, blueTransform);
         currentRotationSpeed = normalRotationSpeed;
 
         currentCenter = center1;
