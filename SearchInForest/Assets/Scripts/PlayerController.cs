@@ -16,11 +16,8 @@ public class PlayerController : MonoBehaviour
     private Transform position2;
     public Rigidbody rb1;
     public Rigidbody rb2;
-    [SerializeField] private PlayerExplosionListener explosionListener;
-    public GameObject bombPrefab;
-    public List<GameObject> bombs = new List<GameObject>();
     public GameObject effect;
-    private AudioSource audio;
+    //private AudioSource audio;
     
     private Rigidbody rb;
     public bool isRotatingClockwise = true;
@@ -72,9 +69,8 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
-        explosionListener.delayAfterExplosionAffect = iFramesAfterDamage;
-        explosionListener.delayTime = iFramseDuration;
-        audio = GetComponent<AudioSource>();
+       
+       
     }
 
     private void Awake()
@@ -125,12 +121,7 @@ public class PlayerController : MonoBehaviour
         {
             isChangeCenter = false;
             //isRotatingClockwise = !isRotatingClockwise;
-            if (currentCenter.name != "2")
-            {
-                var bomb = Instantiate(bombPrefab, red.transform.position, Quaternion.identity);
-                bombs.Add(bomb);
-                audio.Play();
-            }
+           
                 
             
             if (currentCenter == center1)
@@ -216,13 +207,9 @@ public class PlayerController : MonoBehaviour
         hasControl = false;
         currentCenter.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
         currentCenter.SetActive(false);
-        TurnBombsOff();
     }
 
-    public void TurnBombsOff()
-    {
-        StartCoroutine(BombsExplosionDelay());
-    }
+   
 
     private void InteractWithFloor()
     {
@@ -269,19 +256,4 @@ public class PlayerController : MonoBehaviour
         currentCenter.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
     }
     
-    private IEnumerator BombsExplosionDelay()
-    {
-        yield return new WaitForSeconds(0.01f);
-        foreach (var bomb in bombs)
-        {
-            if (bomb != null)
-            {
-                var listener = bomb.GetComponent<ExplodeListener>();
-                if(listener !=null)
-                    listener.RestartExplode();
-            }
-        }
-        bombs.Clear();
-        
-    }
 }
