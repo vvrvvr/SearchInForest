@@ -96,9 +96,10 @@ public class PlayerController : MonoBehaviour
         {
             if (isChangeCenter)
             {
+                isChangeCenter = false;
                 SwitchCenter();
             }
-            InteractWithFloor();
+          //  InteractWithFloor();
         }
 
         if (!Input.GetKey(KeyCode.Space))
@@ -154,22 +155,11 @@ public class PlayerController : MonoBehaviour
         currentCenter.SetActive(false);
     }
 
-    private void InteractWithFloor()
-    {
-        if (currentCenter == null) return;
-
-        Ray ray = new Ray(currentCenter.transform.position, Vector3.down);
-        if (Physics.Raycast(ray, out RaycastHit hit, interactionDistance))
-        {
-            IInteractable interactable = hit.collider.gameObject.GetComponent<IInteractable>();
-            interactable?.Interact();
-        }
-    }
+   
 
     private void SwitchCenter()
     {
-        isChangeCenter = false;
-
+        
         currentCenter = currentCenter == center1 ? center2 : center1;
 
         if (currentCenter == center1)
@@ -177,12 +167,14 @@ public class PlayerController : MonoBehaviour
             SetCenterTransform(center1, position1);
             SetCenterTransform(center2, null);
             currentRb = rb1;
+            red.GetComponent<GroundChecker>().InteractWithFloor();
         }
         else
         {
             SetCenterTransform(center2, position2);
             SetCenterTransform(center1, null);
             currentRb = rb2;
+            blue.GetComponent<GroundChecker>().InteractWithFloor();
         }
 
         currentRotationSpeed = normalRotationSpeed;

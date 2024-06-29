@@ -4,5 +4,5 @@ using UnityEngine;
 
 public class PlayerPointer : MonoBehaviour
 {
-    public bool isGrounded = false;
+    //public bool isGrounded = false;
 }
