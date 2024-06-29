@@ -66,6 +66,7 @@ public class GameManager : MonoBehaviour
         currentCheckpoint = Vector3.zero;
         StartPosition.GetComponent<Renderer>().enabled = false;
         StartLevel();
+        
 
     }
 
